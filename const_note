@@ -97,6 +97,86 @@ const常量具有数据类型，编译器可以进行安全检查；#define宏�
     const int &r3 = r1 * 2;  // r3是一个常量引用
     int &r4 = r1 * 2;  // r4是一个非常量引用，不是一个常量引用，不能引用一个常量
 
+(6)函数中使用const
 
+const int fun1();  //这个本身没有意义，因为参数返回本身就是赋值给其他变量的！
 
+const int* fun2();  //指针指向的内容不变
+
+int *const fun3();  //指针本身不可变
+
+输入参数使用值传递，由于函数将自动产生临时变量用于复制该参数，该输入参数本来就不需要保护，所以不用加const参数
+
+void func(const int var); //值传递，加const没有意义，表示传递过来的参数不可变
+
+void func(int *const var);  //常量指针，指针本身不可变，没有意义，值传递本来就不需要保护参数
+
+void StringCopy(char *dst, const char *src);  //src指针所指内容不可变，函数体内有语句试图改变src的值，编译器将会报错
+
+void func(A a);  //对于非内部数据类型而言，这样的函数声明注定效率比较低。因为函数体内将产生A类型的临时对象用于复制参数A，而临时对象的构造，复制，析构都需要消耗时间
+
+void func(const A &a);  //参数为引用，增加效率的同时防止修改。
+
+void fun(int x)改成void fun(const int &x) // 没有必要，C++内部数据类型的参数不存在构造，析构过程，而复制非常快，值传递和引用传递的效率几乎相当。这样改动之后，达不到提高效率的目的，又降低了函数的可理解性。
+
+（7）类中使用const
+
+class Apple{
+private:
+    int people[100];
+public:
+    Apple(int i);
+    const int apple_number;
+}
+Apple::Apple(int i):apple_number(i){  //对于类中的const成员变量必须通过初始化列表进行初始化
+
+}
+
+//apple.cpp
+class Apple{
+private:
+    int people[100];
+public:
+    Apple(int i);
+    const int apple_number;
+    void take(int num) const;
+    int add(int num);
+    int add(int num) const;
+    int getCount() const;
+}
+
+//main.cpp
+#include<iostream>
+#include"apple.cpp"
+using namespace std;
+
+Apple::Apple(int i):apple_number(i){  // 对于类中的const成员变量必须通过初始化列表进行初始化
+
+}
+
+int Apple::add(int num){  //非const对象可以访问任意成员函数，包括const成员函数
+    take(num);
+}
+
+int Apple::add(int num) const{
+    take(num);
+}
+
+void Apple::take(int num) const{
+    cout<<"take func "<<num<<endl;
+}
+int Apple::getCount() const {
+    take(1);
+    // add(); //error const对象只能访问const成员
+    return apple_number;
+}
+
+int main(){
+    Apple a(2);
+    cout<<a.getCount()<<endl;
+    a.add(10);
+    const Apple b(3);
+    b.add(100);  //add是重载函数，const对象默认调用const成员函数
+    return 0;
+}
 
